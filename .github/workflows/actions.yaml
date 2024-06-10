@@ -1,0 +1,15 @@
+name: Terraform action
+run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+on:
+  push:
+    branches: [ main ]
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    container:
+      image:  hashicorp/terraform 
+    steps:
+      - name: cat
+        run: cat main.tf
+      - name: init
+        run: terraform init 
