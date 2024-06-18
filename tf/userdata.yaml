@@ -1,0 +1,57 @@
+#cloud-config
+users:
+ - default
+ - name: evgsh
+   groups: users,admin,wheel
+   sudo: ALL=(ALL) NOPASSWD:ALL
+   shell: /bin/bash
+   ssh_authorized_keys:
+   - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEhj4SOLM4KE4kWptDMt7rqgoM3P1TF56EOdUvx3armZ study
+
+runcmd: 
+- |
+  #!/bin/bash
+  systemctl disable apt-daily.service && systemctl disable apt-daily.timer && systemctl disable apt-daily-upgrade.timer &&  systemctl disable apt-daily-upgrade.service
+  systemctl stop apt-daily.service && systemctl stop apt-daily.timer && systemctl stop apt-daily-upgrade.timer && systemctl stop apt-daily-upgrade.service
+  systemctl kill --kill-who=all apt-daily.service
+  while ! (systemctl list-units --all apt-daily.service | egrep -q '(dead|failed)')
+  do
+    sleep 1;
+  done
+  cat <<EOF |  tee /etc/sysctl.d/k8s.conf
+  net.bridge.bridge-nf-call-iptables  = 1
+  net.ipv4.ip_forward                 = 1
+  net.bridge.bridge-nf-call-ip6tables = 1
+  EOF
+  sudo sysctl --system
+  cat <<EOF | tee /etc/modules-load.d/k8s.conf
+  overlay
+  br_netfilter
+  EOF
+  cat <<EOF | tee /usr/local/bin/bootstrap-first-node.sh
+  kubeadm init --control-plane-endpoint \${1}:443 --upload-certs --pod-network-cidr=10.244.0.0/16
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+  kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+  echo \$(kubeadm token create --print-join-command) --control-plane --certificate-key \$(kubeadm init phase upload-certs --upload-certs | grep -vw -e certificate -e Namespace) > /tmp/cp_join.sh
+  kubeadm token create --print-join-command > /tmp/worker_join.sh
+  EOF
+  chmod +x /usr/local/bin/bootstrap-first-node.sh
+  modprobe overlay
+  modprobe br_netfilter
+  systemctl stop ufw && systemctl disable ufw
+  curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  apt-get update 
+  apt-get install -y apt-transport-https ca-certificates curl gpg 
+  echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
+  OS=xUbuntu_20.04
+  CRIO_VERSION=1.28
+  echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /"|sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+  echo "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$CRIO_VERSION/$OS/ /"| tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION.list
+  curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION/$OS/Release.key |  apt-key add -
+  curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | apt-key add -
+  apt-get update
+  apt-get install -y kubelet kubeadm kubectl cri-o cri-o-runc cri-tools
+  systemctl enable crio.service
+  systemctl start crio.service
+  apt-mark hold kubelet kubeadm kubectl
+  systemctl enable --now kubelet
