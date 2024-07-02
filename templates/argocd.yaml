@@ -1,0 +1,12 @@
+global:
+  domain: argocd.evgsh.space
+configs:
+  params:
+    server.insecure: true
+server:
+  ingress:
+    enabled: true
+    tls: true
+    ingressClassName: nginx
+    annotations:
+       cert-manager.io/cluster-issuer: yc-clusterissuer
