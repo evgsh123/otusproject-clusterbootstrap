@@ -1,0 +1,16 @@
+alertmanager:
+  config:
+    route:
+      receiver: telegram-alert
+      group_by: ['alertname', 'cluster', 'service']
+      repeat_interval: 1h
+      routes:
+      - match:
+          alertname: Watchdog
+        receiver: null
+    receivers:
+     - name: telegram-alert
+       telegram_configs:
+       - chat_id: 60858587
+         bot_token: ${TG_BOT_TOKEN}
+         api_url: "https://api.telegram.org"

@@ -14,10 +14,10 @@ jobs:
       with:
         registry: gcr.io
         image: ghcr.io/opentofu/opentofu:latest
-        options: -v ${{ github.workspace }}:/workdir -e YC_STORAGE_ACCESS_KEY=${{ secrets.YC_STORAGE_ACCESS_KEY }} -e YC_CLOUD_ID=${{ secrets.YC_CLOUD_ID }} -e YC_FOLDER_ID=${{ secrets.YC_FOLDER_ID }} -e YC_STORAGE_SECRET_KEY=${{ secrets.YC_STORAGE_SECRET_KEY }} -e YC_TOKEN=${{ secrets.YC_TOKEN }} -e TF_VAR_folder_id=${{ secrets.YC_FOLDER_ID }}
+        options: -v ${{ github.workspace }}:/workdir -e YC_STORAGE_ACCESS_KEY=${{ secrets.YC_STORAGE_ACCESS_KEY }} -e YC_CLOUD_ID=${{ secrets.YC_CLOUD_ID }} -e YC_FOLDER_ID=${{ secrets.YC_FOLDER_ID }} -e YC_STORAGE_SECRET_KEY=${{ secrets.YC_STORAGE_SECRET_KEY }} -e YC_TOKEN=${{ secrets.YC_TOKEN }} -e TF_VAR_folder_id=${{ secrets.YC_FOLDER_ID }} -e TF_VAR_TG_BOT_TOKEN=${{ secrets.TG_BOT_TOKEN }} 
         run: |
              cd /workdir/
              tofu init -backend-config="access_key=$YC_STORAGE_ACCESS_KEY" -backend-config="secret_key=$YC_STORAGE_SECRET_KEY"
              tofu init -upgrade
-             tofu apply -input=false -compact-warnings -auto-approve 
+             for i in {1..3}; do tofu apply -input=false  -compact-warnings -auto-approve && break ; done
 

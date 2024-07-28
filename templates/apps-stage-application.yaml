@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: apps-stage-apps
+  namespace: argocd
+spec:
+  destination:
+    namespace: apps-stage
+    server: https://kubernetes.default.svc
+  project:  apps-stage
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+  source:
+    path: helm
+    repoURL: https://github.com/evgsh123/otusproject-apps-cd.git
+    path: helm-chart
+    targetRevision: HEAD
+    helm:
+      valueFiles:
+      - values.stage.yaml

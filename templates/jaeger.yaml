@@ -1,0 +1,275 @@
+
+provisionDataStore:
+  cassandra: true
+agent:
+  enabled: false
+storage:
+  type: cassandra
+casandra:
+  persistence:
+    enabled: true
+schema:
+  annotations: {}
+  image:
+    registry: ""
+    repository: jaegertracing/jaeger-cassandra-schema
+    tag: ""
+    digest: ""
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+  resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 256m
+        memory: 128Mi
+  serviceAccount:
+    create: true
+    automountServiceAccountToken: true
+  podAnnotations: {}
+  podLabels: {}
+  securityContext: {}
+  podSecurityContext: {}
+  ## Deadline for cassandra schema creation job
+  activeDeadlineSeconds: 300
+  extraEnv:
+    []
+    # - name: MODE
+    #   value: prod
+    # - name: TRACE_TTL
+    #   value: "172800"
+    # - name: DEPENDENCIES_TTL
+    #   value: "0"
+
+
+  serviceMonitor:
+    enabled: false
+    additionalLabels: {}
+    # https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#relabelconfig
+    relabelings: []
+    # -- ServiceMonitor metric relabel configs to apply to samples before ingestion
+    # https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#endpoint
+    metricRelabelings: []
+
+collector:
+  podSecurityContext: {}
+  securityContext: {}
+  enabled: true
+  annotations: {}
+  image:
+    registry: ""
+    repository: jaegertracing/jaeger-collector
+    tag: ""
+    digest: ""
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+  dnsPolicy: ClusterFirst
+  extraEnv: []
+  envFrom: []
+  cmdlineParams: {}
+  basePath: /
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 10
+    behavior: {}
+    # targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+  service:
+    annotations: {}
+    type: ClusterIP
+    clusterIP: ""
+    grpc:
+      name: grpc
+      port: 14250
+    otlp:
+       grpc:
+         name: "otlp-grpc"
+         port: 4317
+       http:
+         name: otlp-http
+         port: 4318
+  ingress:
+    enabled: false
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+       cpu: 250m
+       memory: 512Mi
+  serviceAccount:
+    create: true
+    automountServiceAccountToken: false
+    annotations: {}
+  tolerations:
+  - key: "node-role"
+    operator: "Equal"
+    value: "infra"
+    effect: "NoSchedule"
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: node-role
+            operator: In
+            values:
+            - infra
+  serviceMonitor:
+    enabled: true
+    additionalLabels: {}
+    relabelings: []
+    metricRelabelings: []
+query:
+  enabled: true
+  basePath: /
+  initContainers: []
+  oAuthSidecar:
+    enabled: false
+    resources:
+      {}
+      # limits:
+      #   cpu: 500m
+      #   memory: 512Mi
+      # requests:
+      #   cpu: 256m
+      #   memory: 128Mi
+    image:
+      registry: quay.io
+      repository: oauth2-proxy/oauth2-proxy
+      tag: v7.6.0
+      digest: ""
+      pullPolicy: IfNotPresent
+      pullSecrets: []
+    containerPort: 4180
+    args: []
+    extraEnv: []
+    extraConfigmapMounts: []
+    extraSecretMounts: []
+  # config: |-
+  #   provider = "oidc"
+  #   https_address = ":4180"
+  #   upstreams = ["http://localhost:16686"]
+  #   redirect_url = "https://jaeger-svc-domain/oauth2/callback"
+  #   client_id = "jaeger-query"
+  #   oidc_issuer_url = "https://keycloak-svc-domain/auth/realms/Default"
+  #   cookie_secure = "true"
+  #   email_domains = "*"
+  #   oidc_groups_claim = "groups"
+  #   user_id_claim = "preferred_username"
+  #   skip_provider_button = "true"
+  podSecurityContext: {}
+  securityContext: {}
+  agentSidecar:
+    enabled: false
+  #    resources:
+  #      limits:
+  #        cpu: 500m
+  #        memory: 512Mi
+  #      requests:
+  #        cpu: 256m
+  #        memory: 128Mi
+  annotations: {}
+  image:
+    registry: ""
+    repository: jaegertracing/jaeger-query
+    tag: ""
+    digest: ""
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+  dnsPolicy: ClusterFirst
+  cmdlineParams: {}
+  extraEnv: []
+  envFrom: []
+  replicaCount: 1
+  service:
+    annotations: {}
+    type: ClusterIP
+    loadBalancerSourceRanges: []
+    port: 80
+
+  ingress:
+    enabled: true
+    tls:
+      - secretName: jaeger-tls
+        hosts:
+         - jaeger.evgsh.space
+    hosts:
+      - jaeger.evgsh.space
+    ingressClassName: nginx
+    annotations:
+       cert-manager.io/cluster-issuer: yc-clusterissuer
+    health:
+      exposed: false
+  resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+         cpu: 256m
+         memory: 128Mi
+  serviceAccount:
+    create: true
+    automountServiceAccountToken: false
+    name:
+    annotations: {}
+  tolerations:
+  - key: "node-role"
+    operator: "Equal"
+    value: "infra"
+    effect: "NoSchedule"
+  affinity: 
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: node-role
+            operator: In
+            values:
+            - infra  
+spark:
+  enabled: true
+  annotations: {}
+  image:
+    registry: ""
+    repository: jaegertracing/spark-dependencies
+    tag: latest
+    digest: ""
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+  cmdlineParams: {}
+  extraEnv: []
+  schedule: "49 23 * * *"
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 5
+  concurrencyPolicy: Forbid
+  resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 256m
+        memory: 128Mi
+  serviceAccount:
+    create: true
+    annotations: {}
+    automountServiceAccountToken: false
+    name:
+  tolerations:
+  - key: "node-role"
+    operator: "Equal"
+    value: "infra"
+    effect: "NoSchedule"
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: node-role
+            operator: In
+            values:
+            - infra
+

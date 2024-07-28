@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: infra-apps
+  namespace: argocd
+spec:
+  destination:
+    namespace: infra
+    server: https://kubernetes.default.svc
+  project:  infra
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+  source:
+    path: infra-apps
+    repoURL: https://github.com/evgsh123/otusproject-infra.git
+    targetRevision: HEAD
+    helm:
+      valueFiles:
+      - values.yaml

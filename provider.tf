@@ -15,6 +15,10 @@ terraform {
   kubernetes = {
     source = "hashicorp/kubernetes"
    }
+  kubectl = {
+    source  = "gavinbunney/kubectl"
+    version = ">= 1.7.0"
+  }
  }
 backend "s3" {
    endpoints = {
@@ -47,3 +51,16 @@ provider "helm" {
      token                  = data.yandex_client_config.client.iam_token
    }
 }
+
+provider "kubectl" {
+     host                   = data.yandex_kubernetes_cluster.otus-cluster.master.0.external_v4_endpoint
+     cluster_ca_certificate = data.yandex_kubernetes_cluster.otus-cluster.master.0.cluster_ca_certificate
+     token                  = data.yandex_client_config.client.iam_token
+     load_config_file       = false
+}
+
+#provider "aws" {
+#  skip_region_validation      = true
+#  skip_credentials_validation = true
+#  skip_requesting_account_id  = true
+#}
