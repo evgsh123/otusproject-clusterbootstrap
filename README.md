@@ -13,7 +13,7 @@ Username: admin \
 ```
 
 Grafana: https://grafana.evgsh.space \
-Usernaem: admin \
+Username: admin \
 Узнать пароль: 
 ```
  kubectl get secret --namespace infra grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
