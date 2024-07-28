@@ -18,7 +18,7 @@ Username: admin \
 ```
  kubectl get secret --namespace infra grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
 ```
-jaeger: https://jaeger.evgsh.space \
+jaeger: https://jaeger.evgsh.space 
 
 Стейдж приложение: https://stage.evgsh.space \
 Прод приложние: https://shop.evgsh.space 
