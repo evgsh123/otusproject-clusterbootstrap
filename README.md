@@ -20,8 +20,7 @@ Username: admin \
 ```
 jaeger: https://jaeger.evgsh.space \
 
-\
 Стейдж приложение: https://stage.evgsh.space \
-Прод приложние: https://shop.evgsh.space \
+Прод приложние: https://shop.evgsh.space 
 
 
