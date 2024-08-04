@@ -11,6 +11,7 @@ jobs:
     - name: Checkout 
       uses: actions/checkout@v2 
     - uses: addnab/docker-run-action@v3
+      name: terraform
       with:
         registry: gcr.io
         image: ghcr.io/opentofu/opentofu:latest
@@ -20,4 +21,13 @@ jobs:
              tofu init -backend-config="access_key=$YC_STORAGE_ACCESS_KEY" -backend-config="secret_key=$YC_STORAGE_SECRET_KEY"
              tofu init -upgrade
              for i in {1..3}; do tofu apply -input=false  -compact-warnings -auto-approve && break ; done
+    - uses: addnab/docker-run-action@v3
+      name: update secrets
+      with:
+        registry: hub.docker.com
+        image: maniator/gh:latest
+        options: -v ${{ github.workspace }}:/workdir -e GH_TOKEN=${{ secrets.MYGITHUB_TOKEN }}
+        run: |
+             cd /workdir/
+             sh update-secret.sh
 
