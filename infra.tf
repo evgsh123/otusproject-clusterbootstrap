@@ -19,7 +19,8 @@ locals {
       {
         config_folder_id = "${var.folder_id}",
         config_email = "mrevgsh@gmail.com",
-        config_server= "https://acme-staging-v02.api.letsencrypt.org/directory",
+        //config_server= "https://acme-staging-v02.api.letsencrypt.org/directory",
+        config_server= "https://acme-v02.api.letsencrypt.org/directory",
         config_auth_json = templatefile("${path.module}/templates/sa-cr-pusher-key.tpl.json",
            {
                key_id                   = yandex_iam_service_account_key.sa-auth-key.id,
